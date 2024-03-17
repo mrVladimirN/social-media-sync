@@ -1,0 +1,101 @@
+{
+  "name": "social-media-sync",
+  "version": "0.0.1",
+  "repository": "https://github.com/mrVladimirN/social-media-sync.git",
+  "author": "Vladimir Nitu",
+  "license": "MIT",
+  "keywords": [
+    "Social Media",
+    "Cron"
+  ],
+  "main": "dist/app-cli.js",
+  "scripts": {
+    "clean": "rm -rf ./dist",
+    "compile": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "depcheck": "depcheck",
+    "build:ts": " npm run clean && npm run compile",
+    "start:dev": "npm run build:ts && node ./dist/app-cli.js",
+    "start:prod": "node ./build-dist/social-media-sync.js",
+    "test": "jest --detectOpenHandles",
+    "webpack": "webpack --config webpack.config.js",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "bunyan": "1.8.15",
+    "dotenv": "16.3.1",
+    "googleapis": "134.0.0",
+    "jest-junit": "16.0.0",
+    "node-cron": "3.0.3",
+    "validator": "13.11.0",
+    "zod": "3.22.4",
+    "zod-error": "1.5.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "18.4.3",
+    "@commitlint/config-conventional": "18.4.3",
+    "@types/bunyan": "1.8.11",
+    "@types/jest": "29.5.10",
+    "@types/node": "20.10.2",
+    "@types/node-cron": "3.0.11",
+    "@types/validator": "13.11.6",
+    "@typescript-eslint/eslint-plugin": "6.13.2",
+    "@typescript-eslint/parser": "6.13.2",
+    "commitlint": "18.4.3",
+    "depcheck": "1.4.7",
+    "eslint": "8.55.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-plugin-import": "2.29.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "6.1.1",
+    "husky": "8.0.3",
+    "jest": "29.7.0",
+    "lint-staged": "15.2.0",
+    "shebang-loader": "0.0.1",
+    "terser-webpack-plugin": "5.3.9",
+    "ts-jest": "29.1.1",
+    "ts-loader": "9.5.1",
+    "typescript": "5.3.2",
+    "webpack": "5.89.0",
+    "webpack-cli": "5.1.4"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "jest": {
+    "collectCoverage": true,
+    "roots": [
+      "__tests__"
+    ],
+    "collectCoverageFrom": [
+      "**/*.{js,ts}",
+      "!coverage/**",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/src/app-cli.ts"
+    ],
+    "transform": {
+      ".+\\.ts$": "ts-jest"
+    },
+    "coverageReporters": [
+      "text",
+      "text-summary"
+    ],
+    "reporters": [
+      "default"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 0,
+        "functions": 0,
+        "lines": 0,
+        "statements": 0
+      }
+    },
+    "testEnvironment": "node"
+  }
+}
