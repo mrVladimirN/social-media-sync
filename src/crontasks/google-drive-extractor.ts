@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { drive_v3 as GoogleDrive } from 'googleapis';
-import cron from 'node-cron';
+// import cron from 'node-cron';
 import logger from '../config/logger';
 import { DriveFileFolder } from '../types';
+import { fileAccumulator } from './factory';
 
 class GoogleDriveCronTask {
   private drive: GoogleDrive.Drive;
@@ -12,9 +14,9 @@ class GoogleDriveCronTask {
 
   public async start(): Promise<void> {
     // Schedule the task to run every minute
-    cron.schedule('* * * * *', async () => {
-      await this.executeTask();
-    });
+    // cron.schedule('*/1 * * * *', async () => {
+    //   await this.executeTask();
+    // });
 
     // Run the task immediately when starting the app
     await this.executeTask();
@@ -36,7 +38,6 @@ class GoogleDriveCronTask {
 
   private async extractPostFiles(): Promise<DriveFileFolder[]> {
     const response = await this.drive.files.list({
-      pageSize: 1,
       q: "name contains 'Post'",
       fields: 'files(id, name, mimeType)'
     });
@@ -47,18 +48,63 @@ class GoogleDriveCronTask {
     await Promise.all(
       folders.map(async (folder) => {
         const response = await this.drive.files.list({
-          q: `'${folder.id}' in parents and mimeType = 'application/vnd.google-apps.document'`,
-          fields: 'files(id, name)'
+          q: `'${folder.id}' in parents`,
+          fields: 'files(id, name, mimeType)'
         });
 
-        const files: DriveFileFolder[] = response.data.files as DriveFileFolder[];
+        const files: DriveFileFolder[] = response.data
+          .files as DriveFileFolder[];
         logger.info(`Files in folder '${folder.name}':`);
-        await this.processDocuments(files);
+
+        // Filter out documents (Google Docs) from the files list
+        const documentFiles = files.filter(
+          (file) => file.mimeType === 'application/vnd.google-apps.document'
+        );
+
+        // Process documents
+        const postMessage = await this.processDocuments(documentFiles);
+
+        // Logging or further processing for media files can be added here
+        const mediaFiles = await this.processMediaFiles(files.filter(
+          (file) => file.mimeType.startsWith('image/')
+            || file.mimeType.startsWith('video/')
+        ));
+        fileAccumulator.push({
+          content: {
+            textToBePosted: postMessage,
+            media: mediaFiles,
+            originalFile: folder.name
+          }
+        });
       })
     );
   }
 
-  private async processDocuments(documents: DriveFileFolder[]): Promise<void> {
+  private processMediaFiles = async (mediaFiles: DriveFileFolder[]): Promise<{ mediaLink: string; mimeType: string; }[]> => {
+    const processedFiles = await Promise.all(mediaFiles.map(async (mediaFile) => {
+      // Create a permission for public access
+      await this.drive.permissions.create({
+        fileId: mediaFile.id,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone'
+        }
+      });
+
+      // Retrieve media link and MIME type
+      const mediaLink = `https://drive.google.com/uc?export=download&id=${mediaFile.id}`;
+      const { mimeType } = mediaFile;
+
+      return { mediaLink, mimeType };
+    }));
+
+    return processedFiles;
+  };
+
+  private async processDocuments(
+    documents: DriveFileFolder[]
+  ): Promise<string> {
+    let finalPost = '';
     await Promise.all(
       documents.map(async (document) => {
         const response = await this.drive.files.export({
@@ -69,8 +115,10 @@ class GoogleDriveCronTask {
         const content = response.data;
         logger.info(`Content of document '${document.name}':`);
         logger.info(content);
+        finalPost += content;
       })
     );
+    return finalPost;
   }
 }
 
