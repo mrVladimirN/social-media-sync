@@ -17,8 +17,6 @@ const start = async () => {
   process.on('exit', cleanup);
   process.on('SIGINT', cleanup); // Handles Ctrl+C
 
-  // If you need to handle other signals, you can add more event listeners
-
   // Handle unhandled promise rejections
   process.on('unhandledRejection', (reason, promise) => {
     logger.error('Unhandled Rejection at:', promise, 'reason:', reason);

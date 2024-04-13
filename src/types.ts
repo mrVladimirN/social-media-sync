@@ -4,4 +4,14 @@ type DriveFileFolder = {
   name: string;
 };
 
-export { DriveFileFolder };
+type Content = {
+  textToBePosted: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  media?: { mediaLink: string; mimeType: string }[];
+  originalFile: string;
+};
+type FileToBePosted = {
+  content: Content;
+};
+
+export { DriveFileFolder, FileToBePosted };

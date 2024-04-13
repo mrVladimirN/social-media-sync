@@ -24,6 +24,8 @@ module.exports = {
 
     'comma-dangle': ['error', 'never'],
 
+    'max-len': ['error', { code: 150 }],
+
     'linebreak-style': 'off',
 
     'import/extensions': 'off',
